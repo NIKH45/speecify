@@ -1,7 +1,5 @@
 package com.speechify;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -10,22 +8,18 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
 public class ClientRepository {
-    private static final String DB_FILE = "db.json";
     private final ObjectMapper objectMapper;
+    private final JsonDb db;
 
-    public ClientRepository() {
-        this.objectMapper = new ObjectMapper();
+    public ClientRepository(JsonDb db, ObjectMapper objectMapper) {
+        this.db = db;
+        this.objectMapper = objectMapper;
     }
 
     public CompletableFuture<Client> getById(String id) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                File dbFile = new File(DB_FILE);
-                if (!dbFile.exists()) {
-                    return null;
-                }
-
-                ObjectNode root = (ObjectNode) objectMapper.readTree(dbFile);
+                ObjectNode root = db.readRoot();
                 ArrayNode clients = (ArrayNode) root.get("clients");
                 
                 for (int i = 0; i < clients.size(); i++) {
@@ -38,7 +32,7 @@ public class ClientRepository {
                     }
                 }
                 return null;
-            } catch (IOException e) {
+            } catch (Exception e) {
                 return null;
             }
         });
@@ -47,12 +41,7 @@ public class ClientRepository {
     public CompletableFuture<List<Client>> getAll() {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                File dbFile = new File(DB_FILE);
-                if (!dbFile.exists()) {
-                    return new ArrayList<>();
-                }
-
-                ObjectNode root = (ObjectNode) objectMapper.readTree(dbFile);
+                ObjectNode root = db.readRoot();
                 ArrayNode clients = (ArrayNode) root.get("clients");
                 List<Client> clientList = new ArrayList<>();
 
@@ -64,7 +53,7 @@ public class ClientRepository {
                     clientList.add(client);
                 }
                 return clientList;
-            } catch (IOException e) {
+            } catch (Exception e) {
                 return new ArrayList<>();
             }
         });
